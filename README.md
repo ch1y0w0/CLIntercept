@@ -8,5 +8,4 @@ Well, it's not optimal for complex works but it's extremely useful for quick mod
 1. Simple and begginer-friendly
 2. Fast
 3. Lightweight
-4. Written in raw Python with no dependencies
-
+4. Written in raw Python with as less as dependencies possible
