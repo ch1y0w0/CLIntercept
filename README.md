@@ -9,3 +9,7 @@ Well, it's not optimal for complex works but it's extremely useful for quick mod
 2. Fast
 3. Lightweight
 4. Written in raw Python with as less as dependencies possible
+
+
+# ToDo List
+	[ ] Fix Forwarding Back to Browser
