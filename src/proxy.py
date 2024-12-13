@@ -104,6 +104,7 @@ class HTTPProxyServer:
 					break
 				response += data
 			return response
+			print(response)
 		except Exception as e:
 			print(f"Error receiving response: {e}")
 		return None
