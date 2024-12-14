@@ -77,7 +77,7 @@ class HTTPProxyServer:
 			method, url, _ = first_line.split()
 			parsed_url = urlparse(url)
 			match_target = self.is_target(parsed_url)
-
+			print(parsed_url)
 			if match_target:
 				print(f"Parsed request to target: {parsed_url.hostname}:{parsed_url.port or 80}")
 			return parsed_url
