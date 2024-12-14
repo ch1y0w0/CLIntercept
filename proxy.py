@@ -54,12 +54,14 @@ class HTTPProxyServer:
 	def user_action(self, client_socket, url, parsed_url, request):
 		"""Allow the user to decide whether to forward or drop the request."""
 		user_action = input("Enter 'f' to forward, 'd' to drop: ").strip().lower()
+		while user_action not in ['f', 'd']:
+			print("Invalid action. Please enter 'f' to forward or 'd' to drop.")
+			user_action = input("Enter 'f' to forward, 'd' to drop: ").strip().lower()
+
 		if user_action == 'f':
 			self.forward_request(client_socket, url, parsed_url, request)
 		elif user_action == 'd':
 			print("Packet Dropped")
-		else:
-			print("Invalid action. Dropping the packet by default.")
 
 	def receive_request(self, client_socket):
 		"""Receive HTTP request from the client."""
@@ -96,8 +98,8 @@ class HTTPProxyServer:
 		try:
 			target_host = parsed_url.hostname
 			target_port = parsed_url.port or 80
-
 			print(f"Forwarding request to {target_host}:{target_port}...")
+
 			target_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 			target_socket.connect((target_host, target_port))
 
@@ -120,24 +122,28 @@ class HTTPProxyServer:
 			print(f"Response from target server:")
 			print(response.decode('utf-8', errors='ignore'))
 			user_action = input("Enter 'f' to forward, 'd' to drop the response: ").strip().lower()
+			while user_action not in ['f', 'd']:
+				print("Invalid action. Please enter 'f' to forward or 'd' to drop.")
+				user_action = input("Enter 'f' to forward, 'd' to drop the response: ").strip().lower()
+
 			if user_action == 'f':
 				print("Response forwarded to client.")
 				client_socket.sendall(response)
 			elif user_action == 'd':
 				print("Packet Dropped")
-			else:
-				print("Invalid action. Dropping the packet by default.")
 		elif not self.target:  # If no target filter, show all responses
 			print(f"Response from server:")
 			print(response.decode('utf-8', errors='ignore'))
 			user_action = input("Enter 'f' to forward, 'd' to drop the response: ").strip().lower()
+			while user_action not in ['f', 'd']:
+				print("Invalid action. Please enter 'f' to forward or 'd' to drop.")
+				user_action = input("Enter 'f' to forward, 'd' to drop the response: ").strip().lower()
+
 			if user_action == 'f':
 				print("Response forwarded to client.")
 				client_socket.sendall(response)
 			elif user_action == 'd':
 				print("Packet Dropped")
-			else:
-				print("Invalid action. Dropping the packet by default.")
 
 	def receive_response(self, target_socket):
 		"""Receive the HTTP response from the target server."""
