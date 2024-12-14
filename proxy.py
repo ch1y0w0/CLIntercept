@@ -58,7 +58,6 @@ class HTTPProxyServer:
 		user_action = input("Enter 'f' to forward, 'd' to drop: ").strip().lower()
 
 		if user_action == 'f':
-			self.clear_screen()
 			self.forward_request(client_socket, url, parsed_url, request)
 		elif user_action == 'd':
 			self.clear_screen()
