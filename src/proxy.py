@@ -3,6 +3,7 @@ import threading
 import select
 import re
 from urllib.parse import urlparse
+import sys
 
 
 class HTTPProxyServer:
@@ -146,5 +147,5 @@ class HTTPProxyServer:
 
 
 if __name__ == "__main__":
-	proxy = HTTPProxyServer(host='0.0.0.0', port=8080, target='neverssl')
+	proxy = HTTPProxyServer(host='0.0.0.0', port=8080, target=sys.argv[1])
 	proxy.start()
