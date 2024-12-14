@@ -34,15 +34,14 @@ class HTTPProxyServer:
 
 		request = self.receive_request(client_socket)
 		if request:
-			parsed_url = self.parse_request(request)
-
-			if parsed_url:
-				match_target = self.is_target(parsed_url)
+			url, parsed_url = self.parse_request(request)
+			if url:
+				match_target = self.is_target(url)
 
 				if match_target:
 					print("HTTP Request Accepted:")
 					print(request)
-				self.forward_request(client_socket, parsed_url, request)
+				self.forward_request(client_socket, url, parsed_url, request)
 			else:
 				print("Error: Failed to parse the request.")
 		else:
@@ -76,22 +75,22 @@ class HTTPProxyServer:
 			first_line = lines[0]
 			method, url, _ = first_line.split()
 			parsed_url = urlparse(url)
-			match_target = self.is_target(parsed_url)
-			print(parsed_url)
+
+			match_target = self.is_target(url)
 			if match_target:
-				print(f"Parsed request to target: {parsed_url.hostname}:{parsed_url.port or 80}")
-			return parsed_url
+				print(f"Parsed request to target: {url}")
+			return url, parsed_url
 		except Exception as e:
 			print(f"Error parsing request: {e}")
-		return None
+			return None
 
-	def forward_request(self, client_socket, parsed_url, request):
+	def forward_request(self, client_socket, url, parsed_url, request):
 		"""Forward the HTTP request to the target server and send the response back."""
 		try:
 			target_host = parsed_url.hostname
 			target_port = parsed_url.port or 80
 
-			match_target = self.is_target(parsed_url)
+			match_target = self.is_target(url)
 
 			if match_target:
 				print(f"Forwarding request to {target_host}:{target_port}...")
@@ -141,7 +140,6 @@ class HTTPProxyServer:
 	def is_target(self, parsed_url):
 		"""Uses the pattern provided to check if the received request is for the target"""
 		target = self.target
-		print(f'{target}, {parsed_url}, {re.search(target, parsed_url)}')
 		return re.search(target, parsed_url)
 
 
