@@ -41,7 +41,14 @@ class HTTPProxyServer:
 				if match_target:
 					print("HTTP Request Accepted:")
 					print(request)
-				self.forward_request(client_socket, url, parsed_url, request)
+
+					user_action = input()
+					if user_action == 'f':
+						self.forward_request(client_socket, url, parsed_url, request)
+					elif user_action == 'd':
+						print('Packet Dropped')
+				else:
+					self.forward_request(client_socket, url, parsed_url, request)
 			else:
 				print("Error: Failed to parse the request.")
 		else:
@@ -110,11 +117,15 @@ class HTTPProxyServer:
 				if match_target:
 					print("Received response from server:")
 					print(response.decode('utf-8', errors='ignore'))
-
-				# Send the server's response back to the client
-				client_socket.sendall(response)
-				if match_target:
-					print("Response forwarded to client.")
+					user_action = input()
+					if user_action == 'f':
+						print("Response forwarded to client.")
+						client_socket.sendall(response)
+					elif user_action == 'd':
+						print('Packet Dropped')
+				else:
+					# Send the server's response back to the client
+					client_socket.sendall(response)
 			target_socket.close()
 
 		except Exception as e:
