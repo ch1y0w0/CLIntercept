@@ -107,23 +107,37 @@ class HTTPProxyServer:
 			# Receive the response from the server
 			response = self.receive_response(target_socket)
 			if response:
-				self.handle_response(client_socket, response)
+				self.handle_response(client_socket, response, parsed_url)
 			target_socket.close()
 		except Exception as e:
 			print(f"Error forwarding request: {e}")
 		finally:
 			client_socket.close()
 
-	def handle_response(self, client_socket, response):
+	def handle_response(self, client_socket, response, parsed_url):
 		"""Handle server response based on user input."""
-		user_action = input("Enter 'f' to forward, 'd' to drop the response: ").strip().lower()
-		if user_action == 'f':
-			print("Response forwarded to client.")
-			client_socket.sendall(response)
-		elif user_action == 'd':
-			print("Packet Dropped")
-		else:
-			print("Invalid action. Dropping the packet by default.")
+		if self.target and self.is_target(parsed_url):  # If target is set, filter responses
+			print(f"Response from target server:")
+			print(response.decode('utf-8', errors='ignore'))
+			user_action = input("Enter 'f' to forward, 'd' to drop the response: ").strip().lower()
+			if user_action == 'f':
+				print("Response forwarded to client.")
+				client_socket.sendall(response)
+			elif user_action == 'd':
+				print("Packet Dropped")
+			else:
+				print("Invalid action. Dropping the packet by default.")
+		elif not self.target:  # If no target filter, show all responses
+			print(f"Response from server:")
+			print(response.decode('utf-8', errors='ignore'))
+			user_action = input("Enter 'f' to forward, 'd' to drop the response: ").strip().lower()
+			if user_action == 'f':
+				print("Response forwarded to client.")
+				client_socket.sendall(response)
+			elif user_action == 'd':
+				print("Packet Dropped")
+			else:
+				print("Invalid action. Dropping the packet by default.")
 
 	def receive_response(self, target_socket):
 		"""Receive the HTTP response from the target server."""
@@ -143,13 +157,15 @@ class HTTPProxyServer:
 		"""Check if the received request is for the target."""
 		return re.search(self.target, parsed_url.geturl()) is not None
 
+
 def parse_args():
 	"""Parse command-line arguments."""
 	parser = argparse.ArgumentParser(description="Start a proxy server with optional target filter.")
-	parser.add_argument('-t', '--target', type=str, help="Target URL pattern to filter requests.")
+	parser.add_argument('-t', '--target', type=str, help="Target URL pattern to filter requests and responses.")
 	parser.add_argument('-H', '--host', type=str, default='0.0.0.0', help="Host to bind the proxy server.")
 	parser.add_argument('-P', '--port', type=int, default=8080, help="Port to bind the proxy server.")
 	return parser.parse_args()
+
 
 if __name__ == "__main__":
 	args = parse_args()
