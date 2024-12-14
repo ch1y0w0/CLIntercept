@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 
 import socket
-import threading
 import select
 import re
 import os
@@ -16,12 +15,10 @@ class HTTPProxyServer:
 		self.host = host
 		self.port = port
 		self.server_socket = None
-		self.clients = []
 		self.target = target
 
 	def start(self):
 		"""Start the proxy server and listen for incoming connections."""
-		self.clear_screen()
 		self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.server_socket.bind((self.host, self.port))
 		self.server_socket.listen(5)
@@ -29,10 +26,9 @@ class HTTPProxyServer:
 
 		while True:
 			client_socket, client_address = self.server_socket.accept()
-			self.clients.append(client_socket)
-			client_thread = threading.Thread(target=self.handle_client, args=(client_socket,))
-			client_thread.daemon = True
-			client_thread.start()
+			print(f"New connection from {client_address}")
+			self.handle_client(client_socket)
+			client_socket.close()
 
 	def handle_client(self, client_socket):
 		"""Handle communication with the client."""
