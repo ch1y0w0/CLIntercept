@@ -10,7 +10,11 @@ Well, it's not optimal for complex works but it's extremely useful for quick mod
 3. Lightweight
 4. Written in raw Python with as less as dependencies possible
 
+# No I mean Seriously, WHY?
+
+Well, i had times when i needed to do a quick debugging on packets but due to lack of this tool,i had to wait minutes for Burp to load and also deal with its interface. So i decided to write this tool that only needs a single comman to run fast and do the main things that Burp is created for. Also i'm addicted to coding... so yeah.
 
 # ToDo List
 	[X] ~~Fix Forwarding Back to Browser~~
-	[ ] Not Working On All Hosts
+	[X] ~~Not Working On All Hosts~~
+	[ ] Modify Packets
