@@ -9,16 +9,17 @@ import sys
 import argparse
 
 class HTTPProxyServer:
-
 	def __init__(self, target=None, host='0.0.0.0', port=8080):
 		"""Initialize the proxy server with an optional target, host, and port."""
 		self.host = host
 		self.port = port
 		self.server_socket = None
+		self.clients = []
 		self.target = target
 
 	def start(self):
 		"""Start the proxy server and listen for incoming connections."""
+		self.clear_screen()
 		self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.server_socket.bind((self.host, self.port))
 		self.server_socket.listen(5)
@@ -26,9 +27,8 @@ class HTTPProxyServer:
 
 		while True:
 			client_socket, client_address = self.server_socket.accept()
-			print(f"New connection from {client_address}")
-			self.handle_client(client_socket)
-			client_socket.close()
+			self.clients.append(client_socket)
+			self.handle_client(client_socket)  # Handle client sequentially
 
 	def handle_client(self, client_socket):
 		"""Handle communication with the client."""
@@ -101,7 +101,6 @@ class HTTPProxyServer:
 		try:
 			target_host = parsed_url.hostname
 			target_port = parsed_url.port or 80
-
 			print(f"Forwarding request to {target_host}:{target_port}...")
 
 			target_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -114,6 +113,7 @@ class HTTPProxyServer:
 			response = self.receive_response(target_socket)
 			if response:
 				self.handle_response(client_socket, response, parsed_url)
+
 			target_socket.close()
 		except Exception as e:
 			print(f"Error forwarding request: {e}")
