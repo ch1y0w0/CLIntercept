@@ -6,9 +6,10 @@ import re
 import os
 import sys
 import argparse
-import readline
-
 from urllib.parse import urlparse
+from prompt_toolkit import prompt
+from prompt_toolkit.key_binding import KeyBindings
+from prompt_toolkit.input import Input
 
 class HTTPProxyServer:
 	def __init__(self, target=None, host='0.0.0.0', port=8080):
@@ -57,14 +58,39 @@ class HTTPProxyServer:
 
 	def user_action(self, client_socket, url, parsed_url, request):
 		"""Allow the user to decide whether to forward or drop the request."""
-		edited_request = self.edit_packet(request)
-		user_action = input("Press Enter to forward, Esc to drop: ").strip().lower()
-
-		if user_action == '':
-			self.forward_request(client_socket, url, parsed_url, edited_request)
-		else:
+		self.edit_packet(request)
+		print("Press 'Enter' to forward, 'Esc' to drop.")
+		user_action = input().strip().lower()
+		if user_action == 'f':
+			self.forward_request(client_socket, url, parsed_url, request)
+		elif user_action == 'd':
 			self.clear_screen()
 			print("Packet Dropped")
+		else:
+			print("Invalid action. Dropping the packet by default.")
+
+	def edit_packet(self, packet: str):
+		"""Allow the user to edit the packet using the prompt_toolkit."""
+		print("Editing packet:")
+		bindings = KeyBindings()
+
+		@bindings.add('c-c')
+		def _(event):
+			event.app.exit()
+
+		@bindings.add('esc')
+		def _(event):
+			print("Packet dropped.")
+			event.app.exit()
+
+		edited_packet = prompt(
+			'Edit packet (press Enter to submit, Esc to discard):\n',
+			default=packet,
+			key_bindings=bindings,
+			multiline=True
+		)
+
+		return edited_packet
 
 	def receive_request(self, client_socket):
 		"""Receive HTTP request from the client."""
@@ -120,16 +146,28 @@ class HTTPProxyServer:
 
 	def handle_response(self, client_socket, response, parsed_url):
 		"""Handle server response based on user input."""
-		edited_response = self.edit_packet(response.decode('utf-8', errors='ignore'))
-		print(f"Response from server: {edited_response}")
-
-		user_action = input("Press Enter to forward, Esc to drop the response: ").strip().lower()
-
-		if user_action == '':
-			print("Response forwarded to client.")
-			client_socket.sendall(edited_response.encode('utf-8'))
-		else:
-			print("Packet Dropped")
+		if self.target and self.is_target(parsed_url):  # If target is set, filter responses
+			print(f"Response from target server:")
+			print(response.decode('utf-8', errors='ignore'))
+			user_action = input("Enter 'f' to forward, 'd' to drop the response: ").strip().lower()
+			if user_action == 'f':
+				print("Response forwarded to client.")
+				client_socket.sendall(response)
+			elif user_action == 'd':
+				print("Packet Dropped")
+			else:
+				print("Invalid action. Dropping the packet by default.")
+		elif not self.target:  # If no target filter, show all responses
+			print(f"Response from server:")
+			print(response.decode('utf-8', errors='ignore'))
+			user_action = input("Enter 'f' to forward, 'd' to drop the response: ").strip().lower()
+			if user_action == 'f':
+				print("Response forwarded to client.")
+				client_socket.sendall(response)
+			elif user_action == 'd':
+				print("Packet Dropped")
+			else:
+				print("Invalid action. Dropping the packet by default.")
 
 	def receive_response(self, target_socket):
 		"""Receive the HTTP response from the target server."""
@@ -148,14 +186,6 @@ class HTTPProxyServer:
 	def is_target(self, parsed_url):
 		"""Check if the received request is for the target."""
 		return re.search(self.target, parsed_url.geturl()) is not None
-
-	def edit_packet(self, packet):
-		"""Allow the user to edit the packet."""
-		print("Edit the packet:")
-		readline.set_startup_hook(lambda: readline.set_completer_delims(''))  # Disable autocomplete
-		edited_packet = input(f"{packet}\nEdit or press Enter to keep: ")
-		readline.set_startup_hook()  # Reset readline startup hook
-		return edited_packet if edited_packet else packet
 
 	def clear_screen(self):
 		"""Clear the terminal screen."""
