@@ -121,7 +121,7 @@ class HTTPProxyServer:
 			# Receive the response from the server
 			response = self.receive_response(target_socket)
 			if response:
-				self.handle_response(client_socket, response, parsed_url)
+				self.handle_response(client_socket, response, parsed_url, url)
 
 			target_socket.close()
 		except Exception as e:
@@ -129,7 +129,7 @@ class HTTPProxyServer:
 		finally:
 			client_socket.close()
 
-	def handle_response(self, client_socket, response, parsed_url):
+	def handle_response(self, client_socket, response, parsed_url, url):
 		"""Handle server response based on user input."""
 		self.user_action(client_socket, url, parsed_url, response, 'response')
 
