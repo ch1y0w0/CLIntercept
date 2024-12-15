@@ -7,8 +7,11 @@ import os
 from urllib.parse import urlparse
 import sys
 import argparse
+from prompt_toolkit import prompt
+from prompt_toolkit.shortcuts import clear
 
 class HTTPProxyServer:
+
 	def __init__(self, target=None, host='0.0.0.0', port=8080):
 		"""Initialize the proxy server with an optional target, host, and port."""
 		self.host = host
@@ -54,16 +57,26 @@ class HTTPProxyServer:
 			print("Error: Failed to receive the request.")
 
 	def user_action(self, client_socket, url, parsed_url, request):
-		"""Allow the user to decide whether to forward or drop the request."""
-		user_action = input("Enter 'f' to forward, 'd' to drop: ").strip().lower()
-
-		if user_action == 'f':
-			self.forward_request(client_socket, url, parsed_url, request)
-		elif user_action == 'd':
+		"""Allow the user to edit the packet and decide whether to forward or drop the request."""
+		edited_request = self.edit_packet(request)
+		if edited_request is None:
 			self.clear_screen()
 			print("Packet Dropped")
 		else:
-			print("Invalid action. Dropping the packet by default.")
+			self.forward_request(client_socket, url, parsed_url, edited_request)
+
+	def edit_packet(self, request):
+		"""Allow the user to edit the packet using prompt_toolkit."""
+		clear()  # Clears the screen
+		print("Edit the request below (press Enter to finish, ESC to cancel):\n")
+		
+		# Use prompt_toolkit to get user input
+		edited_request = prompt(default=request)
+		
+		if edited_request is None or edited_request == '':
+			return None  # If the user cancels, return None to drop the request
+		
+		return edited_request
 
 	def receive_request(self, client_socket):
 		"""Receive HTTP request from the client."""
@@ -166,10 +179,7 @@ class HTTPProxyServer:
 
 	def clear_screen(self):
 		"""Clear the terminal screen."""
-		if sys.platform == "win32":
-			os.system('cls')
-		else:
-			os.system('clear')
+		clear()
 
 def parse_args():
 	"""Parse command-line arguments."""
