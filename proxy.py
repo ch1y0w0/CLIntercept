@@ -110,7 +110,7 @@ class HTTPProxyServer:
 		try:
 			target_host = parsed_url.hostname
 			target_port = parsed_url.port or 80
-			print(f"Forwarding request to {target_host}:{target_port}...")
+			print(f"Forwarding request to {url}...")
 
 			target_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 			target_socket.connect((target_host, target_port))
