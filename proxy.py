@@ -41,10 +41,10 @@ class HTTPProxyServer:
 			if url:
 				self.user_action(client_socket, url, parsed_url, request, 'request')
 			else:
-				if self.request and self.is_target(parsed_url) or not self.target:
+				if self.target and self.is_target(parsed_url) or not self.target:
 					print("Error: Failed to parse the request.")
 		else:
-			if self.request and self.is_target(parsed_url) or not self.target:
+			if self.target and self.is_target(parsed_url) or not self.target:
 				print("Error: Failed to receive the request.")
 
 	def user_action(self, client_socket, url, parsed_url, packet, method):
@@ -112,7 +112,6 @@ class HTTPProxyServer:
 		try:
 			target_host = parsed_url.hostname
 			target_port = parsed_url.port or 80
-			print(f"{target_host}:{target_port}")
 			print(f"Forwarding request to {url}...")
 
 			target_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -128,7 +127,7 @@ class HTTPProxyServer:
 
 			target_socket.close()
 		except Exception as e:
-			if self.request and self.is_target(parsed_url) or not self.target:
+			if self.targe and self.is_target(parsed_url) or not self.target:
 				print(f"Error forwarding request: {e}")
 		finally:
 			client_socket.close()
@@ -148,7 +147,7 @@ class HTTPProxyServer:
 				response += data
 			return response
 		except Exception as e:
-			if self.request and self.is_target(parsed_url) or not self.target:
+			if self.target and self.is_target(parsed_url) or not self.target:
 				print(f"Error receiving response: {e}")
 		return None
 
