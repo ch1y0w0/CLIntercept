@@ -127,7 +127,7 @@ class HTTPProxyServer:
 
 			target_socket.close()
 		except Exception as e:
-			if self.targe and self.is_target(parsed_url) or not self.target:
+			if self.target and self.is_target(parsed_url) or not self.target:
 				print(f"Error forwarding request: {e}")
 		finally:
 			client_socket.close()
