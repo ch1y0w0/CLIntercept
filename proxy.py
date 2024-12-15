@@ -41,9 +41,11 @@ class HTTPProxyServer:
 			if url:
 				self.user_action(client_socket, url, parsed_url, request, 'request')
 			else:
-				print("Error: Failed to parse the request.")
+				if self.request and self.is_target(parsed_url) or not self.target:
+					print("Error: Failed to parse the request.")
 		else:
-			print("Error: Failed to receive the request.")
+			if self.request and self.is_target(parsed_url) or not self.target:
+				print("Error: Failed to receive the request.")
 
 	def user_action(self, client_socket, url, parsed_url, packet, method):
 		"""Allow the user to edit the packet and decide whether to forward or drop the request."""
@@ -110,6 +112,7 @@ class HTTPProxyServer:
 		try:
 			target_host = parsed_url.hostname
 			target_port = parsed_url.port or 80
+			print(f"{target_host}:{target_port}")
 			print(f"Forwarding request to {url}...")
 
 			target_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -119,13 +122,14 @@ class HTTPProxyServer:
 			target_socket.sendall(request.encode('utf-8'))
 
 			# Receive the response from the server
-			response = self.receive_response(target_socket)
+			response = self.receive_response(target_socket, parsed_url)
 			if response:
 				self.handle_response(client_socket, response, parsed_url, url)
 
 			target_socket.close()
 		except Exception as e:
-			print(f"Error forwarding request: {e}")
+			if self.request and self.is_target(parsed_url) or not self.target:
+				print(f"Error forwarding request: {e}")
 		finally:
 			client_socket.close()
 
@@ -133,7 +137,7 @@ class HTTPProxyServer:
 		"""Handle server response based on user input."""
 		self.user_action(client_socket, url, parsed_url, response, 'response')
 
-	def receive_response(self, target_socket):
+	def receive_response(self, target_socket, parsed_url):
 		"""Receive the HTTP response from the target server."""
 		try:
 			response = b""
@@ -144,7 +148,8 @@ class HTTPProxyServer:
 				response += data
 			return response
 		except Exception as e:
-			print(f"Error receiving response: {e}")
+			if self.request and self.is_target(parsed_url) or not self.target:
+				print(f"Error receiving response: {e}")
 		return None
 
 	def is_target(self, parsed_url):
