@@ -67,7 +67,7 @@ class HTTPProxyServer:
 		else:
 			print("Response from the server:\nEdit the response below (press Enter to finish, ESC to cancel):\n")
 		# Use prompt_toolkit to get user input
-		edited_request = prompt(default=request)
+		edited_request = prompt(default=packet)
 		
 		if edited_request is None or edited_request == '':
 			return None  # If the user cancels, return None to drop the request
