@@ -4,14 +4,16 @@ import socket
 import select
 import re
 import os
+from urllib.parse import urlparse
 import sys
 import argparse
-from urllib.parse import urlparse
 from prompt_toolkit import prompt
 from prompt_toolkit.key_binding import KeyBindings
-from prompt_toolkit.input import Input
+from prompt_toolkit.shortcuts import print_formatted_text
+from prompt_toolkit.application import Application
 
 class HTTPProxyServer:
+
 	def __init__(self, target=None, host='0.0.0.0', port=8080):
 		"""Initialize the proxy server with an optional target, host, and port."""
 		self.host = host
@@ -19,6 +21,12 @@ class HTTPProxyServer:
 		self.server_socket = None
 		self.clients = []
 		self.target = target
+		self.user_input = ''
+		self.bindings = KeyBindings()
+
+		# Set up key bindings for prompt-toolkit
+		self.bindings.add('esc')(self.handle_escape)
+		self.bindings.add('enter')(self.handle_enter)
 
 	def start(self):
 		"""Start the proxy server and listen for incoming connections."""
@@ -57,40 +65,32 @@ class HTTPProxyServer:
 			print("Error: Failed to receive the request.")
 
 	def user_action(self, client_socket, url, parsed_url, request):
-		"""Allow the user to decide whether to forward or drop the request."""
-		self.edit_packet(request)
-		print("Press 'Enter' to forward, 'Esc' to drop.")
-		user_action = input().strip().lower()
-		if user_action == 'f':
-			self.forward_request(client_socket, url, parsed_url, request)
-		elif user_action == 'd':
-			self.clear_screen()
-			print("Packet Dropped")
-		else:
-			print("Invalid action. Dropping the packet by default.")
+		"""Allow the user to edit or decide whether to forward or drop the request."""
+		self.user_input = request  # Set the current request for editing
 
-	def edit_packet(self, packet: str):
-		"""Allow the user to edit the packet using the prompt_toolkit."""
-		print("Editing packet:")
-		bindings = KeyBindings()
+		# Create a prompt for the user to edit the request
+		print_formatted_text(f"\nEdit the HTTP request below (Press 'Esc' to discard, 'Enter' to forward):\n")
+		self.edit_request(client_socket, url, parsed_url)
 
-		@bindings.add('c-c')
-		def _(event):
-			event.app.exit()
-
-		@bindings.add('esc')
-		def _(event):
-			print("Packet dropped.")
-			event.app.exit()
-
-		edited_packet = prompt(
-			'Edit packet (press Enter to submit, Esc to discard):\n',
-			default=packet,
-			key_bindings=bindings,
-			multiline=True
+	def edit_request(self, client_socket, url, parsed_url):
+		"""Allow user to edit the request."""
+		application = Application(
+			layout=prompt.PromptSession(self.user_input),
+			key_bindings=self.bindings
 		)
+		application.run()
 
-		return edited_packet
+		if self.user_input:
+			self.forward_request(client_socket, url, parsed_url, self.user_input)
+
+	def handle_escape(self, event):
+		"""Handle Escape key to discard changes."""
+		self.user_input = ''
+		print_formatted_text("\nEditing discarded. Dropping the packet.\n")
+
+	def handle_enter(self, event):
+		"""Handle Enter key to forward the edited request."""
+		print_formatted_text(f"\nRequest forwarded: {self.user_input}")
 
 	def receive_request(self, client_socket):
 		"""Receive HTTP request from the client."""
@@ -128,6 +128,7 @@ class HTTPProxyServer:
 			target_host = parsed_url.hostname
 			target_port = parsed_url.port or 80
 			print(f"Forwarding request to {target_host}:{target_port}...")
+
 			target_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 			target_socket.connect((target_host, target_port))
 
@@ -138,6 +139,7 @@ class HTTPProxyServer:
 			response = self.receive_response(target_socket)
 			if response:
 				self.handle_response(client_socket, response, parsed_url)
+
 			target_socket.close()
 		except Exception as e:
 			print(f"Error forwarding request: {e}")
