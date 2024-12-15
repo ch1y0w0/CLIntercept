@@ -40,15 +40,9 @@ class HTTPProxyServer:
 			url, parsed_url = self.parse_request(request)
 			if url:
 				if self.target and self.is_target(parsed_url):  # If target is set, filter requests
-					self.clear_screen()
-					print("HTTP Request Accepted:")
-					print(request)
-					self.user_action(client_socket, url, parsed_url, request)
+					self.user_action(client_socket, url, parsed_url, request, 'request')
 				elif not self.target:  # If no target filter, show all packets
-					self.clear_screen()
-					print("HTTP Request:")
-					print(request)
-					self.user_action(client_socket, url, parsed_url, request)
+					self.user_action(client_socket, url, parsed_url, request, 'request')
 				else:
 					self.forward_request(client_socket, url, parsed_url, request)
 			else:
@@ -56,20 +50,22 @@ class HTTPProxyServer:
 		else:
 			print("Error: Failed to receive the request.")
 
-	def user_action(self, client_socket, url, parsed_url, request):
+	def user_action(self, client_socket, url, parsed_url, packet, method):
 		"""Allow the user to edit the packet and decide whether to forward or drop the request."""
-		edited_request = self.edit_packet(request)
+		edited_request = self.edit_packet(packet, method)
 		if edited_request is None:
 			self.clear_screen()
 			print("Packet Dropped")
 		else:
 			self.forward_request(client_socket, url, parsed_url, edited_request)
 
-	def edit_packet(self, request):
+	def edit_packet(self, packet, method):
 		"""Allow the user to edit the packet using prompt_toolkit."""
 		clear()  # Clears the screen
-		print("Edit the request below (press Enter to finish, ESC to cancel):\n")
-		
+		if method == 'request':
+			print("Request from the client:\nEdit the request below (press Enter to finish, ESC to cancel):\n")
+		else:
+			print("Response from the server:\nEdit the response below (press Enter to finish, ESC to cancel):\n")
 		# Use prompt_toolkit to get user input
 		edited_request = prompt(default=request)
 		
@@ -135,29 +131,9 @@ class HTTPProxyServer:
 	def handle_response(self, client_socket, response, parsed_url):
 		"""Handle server response based on user input."""
 		if self.target and self.is_target(parsed_url):  # If target is set, filter responses
-			print(f"Response from target server:")
-			print(response.decode('utf-8', errors='ignore'))
-			user_action = input("Enter 'f' to forward, 'd' to drop the response: ").strip().lower()
-
-			if user_action == 'f':
-				print("Response forwarded to client.")
-				client_socket.sendall(response)
-			elif user_action == 'd':
-				print("Packet Dropped")
-			else:
-				print("Invalid action. Dropping the packet by default.")
+			self.user_action(client_socket, url, parsed_url, response, 'response')
 		elif not self.target:  # If no target filter, show all responses
-			print(f"Response from server:")
-			print(response.decode('utf-8', errors='ignore'))
-			user_action = input("Enter 'f' to forward, 'd' to drop the response: ").strip().lower()
-
-			if user_action == 'f':
-				print("Response forwarded to client.")
-				client_socket.sendall(response)
-			elif user_action == 'd':
-				print("Packet Dropped")
-			else:
-				print("Invalid action. Dropping the packet by default.")
+			self.user_action(client_socket, url, parsed_url, response, 'response')
 
 	def receive_response(self, target_socket):
 		"""Receive the HTTP response from the target server."""
