@@ -6,8 +6,15 @@ import re
 import os
 import sys
 import argparse
+import logging
 from urllib.parse import urlparse
 
+# Set up logging configuration
+logging.basicConfig(
+	format='%(asctime)s - %(message)s',
+	level=logging.INFO,
+	handlers=[logging.StreamHandler()]
+)
 
 class HTTPProxyServer:
 	def __init__(self, target=None, host='0.0.0.0', port=8080):
@@ -24,7 +31,7 @@ class HTTPProxyServer:
 		self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.server_socket.bind((self.host, self.port))
 		self.server_socket.listen(5)
-		print(f"Proxy Server listening on {self.host}:{self.port}")
+		logging.info(f"Proxy Server listening on {self.host}:{self.port}")
 
 		while True:
 			client_socket, client_address = self.server_socket.accept()
@@ -37,24 +44,25 @@ class HTTPProxyServer:
 		if request:
 			url, parsed_url = self.parse_request(request)
 			if url:
+				protocol = "HTTPS" if parsed_url.scheme == "https" else "HTTP"
+				logging.info(f"\nPacket from {client_socket.getpeername()[0]}:{client_socket.getpeername()[1]} to {parsed_url.hostname}:{parsed_url.port or 80} ({protocol})")
+				logging.info(f"Request Data:\n{request}")
 				if self.target and self.is_target(parsed_url):
 					# If target is set, filter requests
 					self.clear_screen()
-					print("HTTP Request Accepted:")
-					print(request)
+					logging.info("HTTP Request Accepted:")
 					self.user_action(client_socket, url, parsed_url, request)
 				elif not self.target:
 					# If no target filter, show all packets
 					self.clear_screen()
-					print("HTTP Request:")
-					print(request)
+					logging.info("HTTP Request:")
 					self.user_action(client_socket, url, parsed_url, request)
 				else:
 					self.forward_request(client_socket, url, parsed_url, request)
 			else:
-				print("Error: Failed to parse the request.")
+				logging.error("Error: Failed to parse the request.")
 		else:
-			print("Error: Failed to receive the request.")
+			logging.error("Error: Failed to receive the request.")
 
 	def user_action(self, client_socket, url, parsed_url, request):
 		"""Allow the user to decide whether to forward or drop the request."""
@@ -63,9 +71,9 @@ class HTTPProxyServer:
 			self.forward_request(client_socket, url, parsed_url, request)
 		elif user_action == 'd':
 			self.clear_screen()
-			print("Packet Dropped")
+			logging.info("Packet Dropped")
 		else:
-			print("Invalid action. Dropping the packet by default.")
+			logging.info("Invalid action. Dropping the packet by default.")
 
 	def receive_request(self, client_socket):
 		"""Receive HTTP request from the client."""
@@ -82,7 +90,7 @@ class HTTPProxyServer:
 					break
 			return request.decode('utf-8', errors='ignore') if request else None
 		except Exception as e:
-			print(f"Error receiving request: {e}")
+			logging.error(f"Error receiving request: {e}")
 		return None
 
 	def parse_request(self, request):
@@ -94,7 +102,7 @@ class HTTPProxyServer:
 			parsed_url = urlparse(url)
 			return url, parsed_url
 		except Exception as e:
-			print(f"Error parsing request: {e}")
+			logging.error(f"Error parsing request: {e}")
 		return None, None
 
 	def forward_request(self, client_socket, url, parsed_url, request):
@@ -102,7 +110,7 @@ class HTTPProxyServer:
 		try:
 			target_host = parsed_url.hostname
 			target_port = parsed_url.port or 80
-			print(f"Forwarding request to {target_host}:{target_port}...")
+			logging.info(f"Forwarding request to {target_host}:{target_port}...")
 			target_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 			target_socket.connect((target_host, target_port))
 
@@ -115,7 +123,7 @@ class HTTPProxyServer:
 				self.handle_response(client_socket, response, parsed_url)
 			target_socket.close()
 		except Exception as e:
-			print(f"Error forwarding request: {e}")
+			logging.error(f"Error forwarding request: {e}")
 		finally:
 			client_socket.close()
 
@@ -123,28 +131,28 @@ class HTTPProxyServer:
 		"""Handle server response based on user input."""
 		if self.target and self.is_target(parsed_url):
 			# If target is set, filter responses
-			print("Response from target server:")
-			print(response.decode('utf-8', errors='ignore'))
+			logging.info(f"Response from target server:")
+			logging.info(response.decode('utf-8', errors='ignore'))
 			user_action = input("Enter 'f' to forward, 'd' to drop the response: ").strip().lower()
 			if user_action == 'f':
-				print("Response forwarded to client.")
+				logging.info("Response forwarded to client.")
 				client_socket.sendall(response)
 			elif user_action == 'd':
-				print("Packet Dropped")
+				logging.info("Packet Dropped")
 			else:
-				print("Invalid action. Dropping the packet by default.")
+				logging.info("Invalid action. Dropping the packet by default.")
 		elif not self.target:
 			# If no target filter, show all responses
-			print("Response from server:")
-			print(response.decode('utf-8', errors='ignore'))
+			logging.info(f"Response from server:")
+			logging.info(response.decode('utf-8', errors='ignore'))
 			user_action = input("Enter 'f' to forward, 'd' to drop the response: ").strip().lower()
 			if user_action == 'f':
-				print("Response forwarded to client.")
+				logging.info("Response forwarded to client.")
 				client_socket.sendall(response)
 			elif user_action == 'd':
-				print("Packet Dropped")
+				logging.info("Packet Dropped")
 			else:
-				print("Invalid action. Dropping the packet by default.")
+				logging.info("Invalid action. Dropping the packet by default.")
 
 	def receive_response(self, target_socket):
 		"""Receive the HTTP response from the target server."""
@@ -157,7 +165,7 @@ class HTTPProxyServer:
 				response += data
 			return response
 		except Exception as e:
-			print(f"Error receiving response: {e}")
+			logging.error(f"Error receiving response: {e}")
 		return None
 
 	def is_target(self, parsed_url):
