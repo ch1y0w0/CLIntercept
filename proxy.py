@@ -51,11 +51,13 @@ class HTTPProxyServer:
 					# If target is set, filter requests
 					self.clear_screen()
 					logging.info("HTTP Request Accepted:")
+					print(request)
 					self.user_action(client_socket, url, parsed_url, request)
 				elif not self.target:
 					# If no target filter, show all packets
 					self.clear_screen()
 					logging.info("HTTP Request:")
+					print(request)
 					self.user_action(client_socket, url, parsed_url, request)
 				else:
 					self.forward_request(client_socket, url, parsed_url, request)
@@ -131,6 +133,7 @@ class HTTPProxyServer:
 		"""Handle server response based on user input."""
 		if self.target and self.is_target(parsed_url):
 			# If target is set, filter responses
+			self.clear_screen()
 			logging.info(f"Response from target server:")
 			logging.info(response.decode('utf-8', errors='ignore'))
 			user_action = input("Enter 'f' to forward, 'd' to drop the response: ").strip().lower()
@@ -143,6 +146,7 @@ class HTTPProxyServer:
 				logging.info("Invalid action. Dropping the packet by default.")
 		elif not self.target:
 			# If no target filter, show all responses
+			self.clear_screen()
 			logging.info(f"Response from server:")
 			logging.info(response.decode('utf-8', errors='ignore'))
 			user_action = input("Enter 'f' to forward, 'd' to drop the response: ").strip().lower()
