@@ -62,8 +62,10 @@ class HTTPProxyServer:
 				else:
 					self.forward_request(client_socket, url, parsed_url, request)
 			else:
+				self.clear_screen()
 				logging.error("Error: Failed to parse the request.")
 		else:
+			self.clear_screen()
 			logging.error("Error: Failed to receive the request.")
 
 	def user_action(self, client_socket, url, parsed_url, request):
@@ -75,6 +77,7 @@ class HTTPProxyServer:
 			self.clear_screen()
 			logging.info("Packet Dropped")
 		else:
+			self.clear_screen()
 			logging.info("Invalid action. Dropping the packet by default.")
 
 	def receive_request(self, client_socket):
@@ -92,6 +95,7 @@ class HTTPProxyServer:
 					break
 			return request.decode('utf-8', errors='ignore') if request else None
 		except Exception as e:
+			self.clear_screen()
 			logging.error(f"Error receiving request: {e}")
 		return None
 
@@ -104,6 +108,7 @@ class HTTPProxyServer:
 			parsed_url = urlparse(url)
 			return url, parsed_url
 		except Exception as e:
+			self.clear_screen()
 			logging.error(f"Error parsing request: {e}")
 		return None, None
 
@@ -112,6 +117,7 @@ class HTTPProxyServer:
 		try:
 			target_host = parsed_url.hostname
 			target_port = parsed_url.port or 80
+			self.clear_screen()
 			logging.info(f"Forwarding request to {target_host}:{target_port}...")
 			target_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 			target_socket.connect((target_host, target_port))
@@ -125,6 +131,7 @@ class HTTPProxyServer:
 				self.handle_response(client_socket, response, parsed_url)
 			target_socket.close()
 		except Exception as e:
+			self.clear_screen()
 			logging.error(f"Error forwarding request: {e}")
 		finally:
 			client_socket.close()
@@ -138,11 +145,14 @@ class HTTPProxyServer:
 			logging.info(response.decode('utf-8', errors='ignore'))
 			user_action = input("Enter 'f' to forward, 'd' to drop the response: ").strip().lower()
 			if user_action == 'f':
+				self.clear_screen()
 				logging.info("Response forwarded to client.")
 				client_socket.sendall(response)
 			elif user_action == 'd':
+				self.clear_screen()
 				logging.info("Packet Dropped")
 			else:
+				self.clear_screen()
 				logging.info("Invalid action. Dropping the packet by default.")
 		elif not self.target:
 			# If no target filter, show all responses
@@ -151,11 +161,14 @@ class HTTPProxyServer:
 			logging.info(response.decode('utf-8', errors='ignore'))
 			user_action = input("Enter 'f' to forward, 'd' to drop the response: ").strip().lower()
 			if user_action == 'f':
+				self.clear_screen()
 				logging.info("Response forwarded to client.")
 				client_socket.sendall(response)
 			elif user_action == 'd':
+				self.clear_screen()
 				logging.info("Packet Dropped")
 			else:
+				self.clear_screen()
 				logging.info("Invalid action. Dropping the packet by default.")
 
 	def receive_response(self, target_socket):
@@ -169,6 +182,7 @@ class HTTPProxyServer:
 				response += data
 			return response
 		except Exception as e:
+			self.clear_screen()
 			logging.error(f"Error receiving response: {e}")
 		return None
 
