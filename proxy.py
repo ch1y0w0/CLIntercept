@@ -63,7 +63,7 @@ class HTTPProxyServer:
 					self.forward_request(client_socket, url, parsed_url, request)
 			else:
 				self.clear_screen()
-				logging.error("Error: Failed to parse the request.")
+				logging.error(f"Error: Failed to parse the request to {url}")
 		else:
 			self.clear_screen()
 			logging.error("Error: Failed to receive the request.")
@@ -132,7 +132,7 @@ class HTTPProxyServer:
 			target_socket.close()
 		except Exception as e:
 			self.clear_screen()
-			logging.error(f"Error forwarding request: {e}")
+			logging.error(f"Error forwarding request to {url}: {e}")
 		finally:
 			client_socket.close()
 
