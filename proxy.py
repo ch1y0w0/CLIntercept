@@ -106,8 +106,9 @@ class HTTPProxyServer:
 				self.handle_response(client_socket, response, parsed_url)
 			target_socket.close()
 		except Exception as e:
-			self.clear_screen()
-			logging.error(f"Error forwarding request to {url}: {e}")
+			if url and self.should_handle_request(parsed_url) or not url:
+				self.clear_screen()
+				logging.error(f"Error forwarding request to {url}: {e}")
 		finally:
 			client_socket.close()
 
