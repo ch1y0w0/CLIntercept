@@ -18,3 +18,4 @@ Well, i had times when i needed to do a quick debugging on packets but due to la
 	[X] ~~Fix Forwarding Back to Browser~~
 	[X] ~~Not Working On All Hosts~~
 	[ ] Modify Packets
+	[ ] HTTPS
