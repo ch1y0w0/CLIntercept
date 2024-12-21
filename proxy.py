@@ -33,7 +33,7 @@ class HTTPProxyServer:
 		self.server_socket.listen(5)
 
 		if self.target:
-			logging.info(f"""Proxy Server listening on {self.host}:{self.port} with '{self.target}' provided as target""")
+			logging.info(f"""Proxy Server listening on {self.host}:{self.port} with '{self.target}' as target""")
 		else:
 			logging.info(f"Proxy Server listening on {self.host}:{self.port}")
 
@@ -51,20 +51,25 @@ class HTTPProxyServer:
 				protocol = "HTTPS" if parsed_url.scheme == "https" else "HTTP"
 				logging.info(f"\nPacket from {client_socket.getpeername()[0]}:{client_socket.getpeername()[1]} to {parsed_url.hostname}:{parsed_url.port or 80} ({protocol})")
 				logging.info(f"Request Data:\n{request}")
-				if self.target and self.is_target(parsed_url):
-					# If target is set, filter requests
-					self.clear_screen()
-					logging.info("HTTP Request Accepted:")
-					print(request)
-					self.user_action(client_socket, url, parsed_url, request)
-				elif not self.target:
-					# If no target filter, show all packets
-					self.clear_screen()
-					logging.info("HTTP Request:")
-					print(request)
-					self.user_action(client_socket, url, parsed_url, request)
+
+				if parsed_url.scheme == "https" and "CONNECT" in request:
+					# Handle HTTPS by establishing a tunnel
+					self.handle_https_tunnel(client_socket, request, parsed_url)
 				else:
-					self.forward_request(client_socket, url, parsed_url, request)
+					if self.target and self.is_target(parsed_url):
+						# If target is set, filter requests
+						self.clear_screen()
+						logging.info("HTTP Request Accepted:")
+						print(request)
+						self.user_action(client_socket, url, parsed_url, request)
+					elif not self.target:
+						# If no target filter, show all packets
+						self.clear_screen()
+						logging.info("HTTP Request:")
+						print(request)
+						self.user_action(client_socket, url, parsed_url, request)
+					else:
+						self.forward_request(client_socket, url, parsed_url, request)
 			else:
 				if self.target and self.is_target(parsed_url) or not self.target:
 					self.clear_screen()
@@ -85,6 +90,50 @@ class HTTPProxyServer:
 		else:
 			self.clear_screen()
 			logging.info("Invalid action. Dropping the packet by default.")
+
+	def handle_https_tunnel(self, client_socket, request, parsed_url):
+		"""Handle the HTTPS CONNECT method to establish a tunnel."""
+		try:
+			target_host = parsed_url.hostname
+			target_port = parsed_url.port or 443  # Default HTTPS port
+			logging.info(f"Establishing tunnel to {target_host}:{target_port}")
+
+			# Respond to the client with HTTP 200 to acknowledge the tunnel
+			client_socket.sendall(b"HTTP/1.1 200 Connection Established\r\n\r\n")
+
+			# Now create a socket to the target server
+			target_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+			target_socket.connect((target_host, target_port))
+
+			# Set up a bidirectional communication tunnel
+			self.tunnel_traffic(client_socket, target_socket)
+		except Exception as e:
+			logging.error(f"Error handling HTTPS tunnel: {e}")
+			client_socket.close()
+
+	def tunnel_traffic(self, client_socket, target_socket):
+		"""Tunnels traffic between the client and target server."""
+		try:
+			# Use select to handle both sockets simultaneously
+			while True:
+				ready_sockets, _, _ = select.select([client_socket, target_socket], [], [])
+				if client_socket in ready_sockets:
+					data = client_socket.recv(4096)
+					if data:
+						target_socket.sendall(data)
+					else:
+						break
+				if target_socket in ready_sockets:
+					data = target_socket.recv(4096)
+					if data:
+						client_socket.sendall(data)
+					else:
+						break
+		except Exception as e:
+			logging.error(f"Error tunneling traffic: {e}")
+		finally:
+			client_socket.close()
+			target_socket.close()
 
 	def receive_request(self, client_socket):
 		"""Receive HTTP request from the client."""
