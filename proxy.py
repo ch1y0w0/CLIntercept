@@ -127,7 +127,7 @@ class HTTPProxyServer:
 			target_port = parsed_url.port or 80
 			if self.target and self.is_target(parsed_url) or not self.target:
 				self.clear_screen()
-				logging.info(f"Forwarding request to {target_host}:{target_port}...")
+				logging.info(f"Forwarding request to {target_host}:{target_port}:\n\n{request}")
 			target_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 			target_socket.connect((target_host, target_port))
 
@@ -156,7 +156,7 @@ class HTTPProxyServer:
 			user_action = input("Enter 'f' to forward, 'd' to drop the response: ").strip().lower()
 			if user_action == 'f':
 				self.clear_screen()
-				logging.info("Response forwarded to client.")
+				logging.info(f"Response forwarded to client:\n\n{response}")
 				client_socket.sendall(response)
 			elif user_action == 'd':
 				self.clear_screen()
@@ -172,7 +172,7 @@ class HTTPProxyServer:
 			user_action = input("Enter 'f' to forward, 'd' to drop the response: ").strip().lower()
 			if user_action == 'f':
 				self.clear_screen()
-				logging.info("Response forwarded to client.")
+				logging.info(f"Response forwarded to client:\n\n{response}")
 				client_socket.sendall(response)
 			elif user_action == 'd':
 				self.clear_screen()
