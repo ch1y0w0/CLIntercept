@@ -33,7 +33,7 @@ class HTTPProxyServer:
 		self.server_socket.listen(5)
 
 		if self.target:
-			logging.info(f"Proxy Server listening on {self.host}:{self.port} with {self.target} provided as target")
+			logging.info(f"""Proxy Server listening on {self.host}:{self.port} with '{self.target}' provided as target""")
 		else:
 			logging.info(f"Proxy Server listening on {self.host}:{self.port}")
 
@@ -126,7 +126,8 @@ class HTTPProxyServer:
 			target_host = parsed_url.hostname
 			target_port = parsed_url.port or 80
 			self.clear_screen()
-			logging.info(f"Forwarding request to {target_host}:{target_port}...")
+			if self.target and self.is_target(parsed_url) or not self.target:
+				logging.info(f"Forwarding request to {target_host}:{target_port}...")
 			target_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 			target_socket.connect((target_host, target_port))
 
