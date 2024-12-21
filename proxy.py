@@ -32,10 +32,7 @@ class HTTPProxyServer:
 		self.server_socket.bind((self.host, self.port))
 		self.server_socket.listen(5)
 
-		if self.target:
-			logging.info(f"""Proxy Server listening on {self.host}:{self.port} with '{self.target}' as target""")
-		else:
-			logging.info(f"Proxy Server listening on {self.host}:{self.port}")
+		logging.info(f"Proxy Server listening on {self.host}:{self.port}" + (f" with '{self.target}' as target" if self.target else ""))
 
 		while True:
 			client_socket, client_address = self.server_socket.accept()
@@ -47,93 +44,27 @@ class HTTPProxyServer:
 		request = self.receive_request(client_socket)
 		if request:
 			url, parsed_url = self.parse_request(request)
-			if url:
-				protocol = "HTTPS" if parsed_url.scheme == "https" else "HTTP"
-				logging.info(f"\nPacket from {client_socket.getpeername()[0]}:{client_socket.getpeername()[1]} to {parsed_url.hostname}:{parsed_url.port or 80} ({protocol})")
+			if url and self.should_handle_request(parsed_url):
+				logging.info(f"\nPacket from {client_socket.getpeername()[0]}:{client_socket.getpeername()[1]} to {parsed_url.hostname}:{parsed_url.port or 80} ({'HTTPS' if parsed_url.scheme == 'https' else 'HTTP'})")
 				logging.info(f"Request Data:\n{request}")
-
-				if parsed_url.scheme == "https" and "CONNECT" in request:
-					# Handle HTTPS by establishing a tunnel
-					self.handle_https_tunnel(client_socket, request, parsed_url)
-				else:
-					if self.target and self.is_target(parsed_url):
-						# If target is set, filter requests
-						self.clear_screen()
-						logging.info("HTTP Request Accepted:")
-						print(request)
-						self.user_action(client_socket, url, parsed_url, request)
-					elif not self.target:
-						# If no target filter, show all packets
-						self.clear_screen()
-						logging.info("HTTP Request:")
-						print(request)
-						self.user_action(client_socket, url, parsed_url, request)
-					else:
-						self.forward_request(client_socket, url, parsed_url, request)
-			else:
-				if self.target and self.is_target(parsed_url) or not self.target:
-					self.clear_screen()
-					logging.error(f"Error: Failed to parse the request to {url}")
-		else:
-			if self.target and self.is_target(parsed_url) or not self.target:
 				self.clear_screen()
-				logging.error("Error: Failed to receive the request.")
+				logging.info("HTTP Request Accepted:")
+				print(request)
+				self.user_action(client_socket, url, parsed_url, request)
+			else:
+				self.forward_request(client_socket, url, parsed_url, request)
+		else:
+			self.clear_screen()
+			logging.error("Error: Failed to receive or parse the request.")
 
 	def user_action(self, client_socket, url, parsed_url, request):
 		"""Allow the user to decide whether to forward or drop the request."""
 		user_action = input("Enter 'f' to forward, 'd' to drop: ").strip().lower()
 		if user_action == 'f':
 			self.forward_request(client_socket, url, parsed_url, request)
-		elif user_action == 'd':
-			self.clear_screen()
-			logging.info("Packet Dropped")
 		else:
 			self.clear_screen()
-			logging.info("Invalid action. Dropping the packet by default.")
-
-	def handle_https_tunnel(self, client_socket, request, parsed_url):
-		"""Handle the HTTPS CONNECT method to establish a tunnel."""
-		try:
-			target_host = parsed_url.hostname
-			target_port = parsed_url.port or 443  # Default HTTPS port
-			logging.info(f"Establishing tunnel to {target_host}:{target_port}")
-
-			# Respond to the client with HTTP 200 to acknowledge the tunnel
-			client_socket.sendall(b"HTTP/1.1 200 Connection Established\r\n\r\n")
-
-			# Now create a socket to the target server
-			target_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-			target_socket.connect((target_host, target_port))
-
-			# Set up a bidirectional communication tunnel
-			self.tunnel_traffic(client_socket, target_socket)
-		except Exception as e:
-			logging.error(f"Error handling HTTPS tunnel: {e}")
-			client_socket.close()
-
-	def tunnel_traffic(self, client_socket, target_socket):
-		"""Tunnels traffic between the client and target server."""
-		try:
-			# Use select to handle both sockets simultaneously
-			while True:
-				ready_sockets, _, _ = select.select([client_socket, target_socket], [], [])
-				if client_socket in ready_sockets:
-					data = client_socket.recv(4096)
-					if data:
-						target_socket.sendall(data)
-					else:
-						break
-				if target_socket in ready_sockets:
-					data = target_socket.recv(4096)
-					if data:
-						client_socket.sendall(data)
-					else:
-						break
-		except Exception as e:
-			logging.error(f"Error tunneling traffic: {e}")
-		finally:
-			client_socket.close()
-			target_socket.close()
+			logging.info("Packet Dropped" if user_action == 'd' else "Invalid action. Dropping the packet by default.")
 
 	def receive_request(self, client_socket):
 		"""Receive HTTP request from the client."""
@@ -150,85 +81,54 @@ class HTTPProxyServer:
 					break
 			return request.decode('utf-8', errors='ignore') if request else None
 		except Exception as e:
-			if self.target and self.is_target(parsed_url) or not self.target:
-				self.clear_screen()
-				logging.error(f"Error receiving request: {e}")
+			self.clear_screen()
+			logging.error(f"Error receiving request: {e}")
 		return None
 
 	def parse_request(self, request):
 		"""Parse the HTTP request to extract the target URL."""
 		try:
-			lines = request.split('\r\n')
-			first_line = lines[0]
-			method, url, _ = first_line.split()
+			method, url, _ = request.split('\r\n')[0].split()
 			parsed_url = urlparse(url)
 			return url, parsed_url
 		except Exception as e:
-			if self.target and self.is_target(parsed_url) or not self.target:
-				self.clear_screen()
-				logging.error(f"Error parsing request: {e}")
+			self.clear_screen()
+			logging.error(f"Error parsing request: {e}")
 		return None, None
 
 	def forward_request(self, client_socket, url, parsed_url, request):
 		"""Forward the HTTP request to the target server and send the response back."""
 		try:
-			target_host = parsed_url.hostname
-			target_port = parsed_url.port or 80
-			if self.target and self.is_target(parsed_url) or not self.target:
-				self.clear_screen()
-				logging.info(f"Forwarding request to {target_host}:{target_port}:\n\n{request}")
-			target_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-			target_socket.connect((target_host, target_port))
-
-			# Forward the HTTP request to the destination server
+			target_socket = self.connect_to_target(parsed_url)
 			target_socket.sendall(request.encode('utf-8'))
-
-			# Receive the response from the server
 			response = self.receive_response(target_socket)
 			if response:
 				self.handle_response(client_socket, response, parsed_url)
 			target_socket.close()
 		except Exception as e:
-			if self.target and self.is_target(parsed_url) or not self.target:
-				self.clear_screen()
-				logging.error(f"Error forwarding request to {url}: {e}")
+			self.clear_screen()
+			logging.error(f"Error forwarding request to {url}: {e}")
 		finally:
 			client_socket.close()
 
 	def handle_response(self, client_socket, response, parsed_url):
 		"""Handle server response based on user input."""
-		if self.target and self.is_target(parsed_url):
-			# If target is set, filter responses
+		if self.target and self.is_target(parsed_url) or not self.target:
 			self.clear_screen()
-			logging.info(f"Response from target server:")
-			logging.info(response.decode('utf-8', errors='ignore'))
+			logging.info(f"Response from {'target' if self.target else 'server'}: {response.decode('utf-8', errors='ignore')}")
 			user_action = input("Enter 'f' to forward, 'd' to drop the response: ").strip().lower()
 			if user_action == 'f':
-				self.clear_screen()
-				logging.info(f"Response forwarded to client:\n\n{response}")
 				client_socket.sendall(response)
-			elif user_action == 'd':
-				self.clear_screen()
-				logging.info("Packet Dropped")
 			else:
-				self.clear_screen()
-				logging.info("Invalid action. Dropping the packet by default.")
-		elif not self.target:
-			# If no target filter, show all responses
-			self.clear_screen()
-			logging.info(f"Response from server:")
-			logging.info(response.decode('utf-8', errors='ignore'))
-			user_action = input("Enter 'f' to forward, 'd' to drop the response: ").strip().lower()
-			if user_action == 'f':
-				self.clear_screen()
-				logging.info(f"Response forwarded to client:\n\n{response}")
-				client_socket.sendall(response)
-			elif user_action == 'd':
-				self.clear_screen()
-				logging.info("Packet Dropped")
-			else:
-				self.clear_screen()
-				logging.info("Invalid action. Dropping the packet by default.")
+				logging.info("Packet Dropped" if user_action == 'd' else "Invalid action. Dropping the packet by default.")
+		else:
+			self.forward_response(client_socket, response)
+
+	def forward_response(self, client_socket, response):
+		"""Forward the response to the client."""
+		self.clear_screen()
+		logging.info(f"Response forwarded to client:\n\n{response}")
+		client_socket.sendall(response)
 
 	def receive_response(self, target_socket):
 		"""Receive the HTTP response from the target server."""
@@ -241,21 +141,29 @@ class HTTPProxyServer:
 				response += data
 			return response
 		except Exception as e:
-			if self.target and self.is_target(parsed_url) or not self.target:
-				self.clear_screen()
-				logging.error(f"Error receiving response: {e}")
+			self.clear_screen()
+			logging.error(f"Error receiving response: {e}")
 		return None
 
 	def is_target(self, parsed_url):
 		"""Check if the received request is for the target."""
 		return re.search(self.target, parsed_url.geturl()) is not None
 
+	def should_handle_request(self, parsed_url):
+		"""Check if request should be handled based on target."""
+		return self.target and self.is_target(parsed_url) or not self.target
+
+	def connect_to_target(self, parsed_url):
+		"""Create and return a socket connection to the target server."""
+		target_host = parsed_url.hostname
+		target_port = parsed_url.port or 80
+		target_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		target_socket.connect((target_host, target_port))
+		return target_socket
+
 	def clear_screen(self):
 		"""Clear the terminal screen."""
-		if sys.platform == "win32":
-			os.system('cls')
-		else:
-			os.system('clear')
+		os.system('cls' if sys.platform == "win32" else 'clear')
 
 
 def parse_args():
