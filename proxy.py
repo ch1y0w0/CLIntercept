@@ -125,8 +125,8 @@ class HTTPProxyServer:
 		try:
 			target_host = parsed_url.hostname
 			target_port = parsed_url.port or 80
-			self.clear_screen()
 			if self.target and self.is_target(parsed_url) or not self.target:
+				self.clear_screen()
 				logging.info(f"Forwarding request to {target_host}:{target_port}...")
 			target_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 			target_socket.connect((target_host, target_port))
