@@ -31,7 +31,11 @@ class HTTPProxyServer:
 		self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.server_socket.bind((self.host, self.port))
 		self.server_socket.listen(5)
-		logging.info(f"Proxy Server listening on {self.host}:{self.port}")
+
+		if self.target:
+			logging.info(f"Proxy Server listening on {self.host}:{self.port} with {self.target} provided as target")
+		else:
+			logging.info(f"Proxy Server listening on {self.host}:{self.port}")
 
 		while True:
 			client_socket, client_address = self.server_socket.accept()
@@ -62,11 +66,13 @@ class HTTPProxyServer:
 				else:
 					self.forward_request(client_socket, url, parsed_url, request)
 			else:
-				self.clear_screen()
-				logging.error(f"Error: Failed to parse the request to {url}")
+				if self.target and self.is_target(parsed_url) or not self.target:
+					self.clear_screen()
+					logging.error(f"Error: Failed to parse the request to {url}")
 		else:
-			self.clear_screen()
-			logging.error("Error: Failed to receive the request.")
+			if self.target and self.is_target(parsed_url) or not self.target:
+				self.clear_screen()
+				logging.error("Error: Failed to receive the request.")
 
 	def user_action(self, client_socket, url, parsed_url, request):
 		"""Allow the user to decide whether to forward or drop the request."""
@@ -95,8 +101,9 @@ class HTTPProxyServer:
 					break
 			return request.decode('utf-8', errors='ignore') if request else None
 		except Exception as e:
-			self.clear_screen()
-			logging.error(f"Error receiving request: {e}")
+			if self.target and self.is_target(parsed_url) or not self.target:
+				self.clear_screen()
+				logging.error(f"Error receiving request: {e}")
 		return None
 
 	def parse_request(self, request):
@@ -108,8 +115,9 @@ class HTTPProxyServer:
 			parsed_url = urlparse(url)
 			return url, parsed_url
 		except Exception as e:
-			self.clear_screen()
-			logging.error(f"Error parsing request: {e}")
+			if self.target and self.is_target(parsed_url) or not self.target:
+				self.clear_screen()
+				logging.error(f"Error parsing request: {e}")
 		return None, None
 
 	def forward_request(self, client_socket, url, parsed_url, request):
@@ -131,8 +139,9 @@ class HTTPProxyServer:
 				self.handle_response(client_socket, response, parsed_url)
 			target_socket.close()
 		except Exception as e:
-			self.clear_screen()
-			logging.error(f"Error forwarding request to {url}: {e}")
+			if self.target and self.is_target(parsed_url) or not self.target:
+				self.clear_screen()
+				logging.error(f"Error forwarding request to {url}: {e}")
 		finally:
 			client_socket.close()
 
@@ -182,8 +191,9 @@ class HTTPProxyServer:
 				response += data
 			return response
 		except Exception as e:
-			self.clear_screen()
-			logging.error(f"Error receiving response: {e}")
+			if self.target and self.is_target(parsed_url) or not self.target:
+				self.clear_screen()
+				logging.error(f"Error receiving response: {e}")
 		return None
 
 	def is_target(self, parsed_url):
