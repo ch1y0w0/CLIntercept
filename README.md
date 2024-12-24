@@ -14,8 +14,13 @@ Well, it's not optimal for complex works but it's extremely useful for quick mod
 
 Well, i had times when i needed to do a quick debugging on packets but due to lack of this tool, i had to wait minutes for Burp to load and also deal with its interface. So i decided to write this tool that only needs a single command to run and do the main things that Burp is created for. Also i'm addicted to coding... so yeah.
 
+
+# Disclaimer
+
+This tool is still in development phase and lacks many useful features. I'm actively developing it for my personal use so make sure to watch for changes. Any contribution is appreciated. And you can always reach me at my [X](https://x.com/Ch1y0w0)
+
 # ToDo List
 	[X] ~~Fix Forwarding Back to Browser~~
 	[X] ~~Not Working On All Hosts~~
 	[ ] Modify Packets
-	[ ] HTTPS
+	[ ] HTTPS (Certificate generation)
