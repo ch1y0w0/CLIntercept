@@ -24,3 +24,4 @@ This tool is still in development phase and lacks many useful features. I'm acti
 	[X] ~~Not Working On All Hosts~~
 	[ ] Modify Packets
 	[ ] HTTPS (Certificate generation)
+	[ ] Full Rework
