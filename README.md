@@ -17,11 +17,13 @@ Well, i had times when i needed to do a quick debugging on packets but due to la
 
 # Disclaimer
 
-This tool is still in development phase and lacks many useful features. I'm actively developing it for my personal use so make sure to watch for changes. Any contribution is appreciated. And you can always reach me at my [X](https://x.com/Ch1y0w0)
+This tool is still in development phase and lacks many useful features. I'm actively developing it for my personal use so make sure to watch for changes. Any contribution is appreciated. And you can always reach to me at my [X](https://x.com/Ch1y0w0)
+
+**Note: (HTTPS support is in progress)**
 
 # ToDo List
 	[X] ~~Fix Forwarding Back to Browser~~
 	[X] ~~Not Working On All Hosts~~
 	[ ] Modify Packets
 	[ ] HTTPS (Certificate generation)
-	[ ] Full Rework
+	[X] ~~Full Rework~~
