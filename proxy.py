@@ -87,6 +87,7 @@ def main():
 						if user_input == "F":
 							response = forward_packet(dest_ip, dest_port, data)
 							if response:
+								clear_screen()
 								print(f"Response from server:\n{response.decode(errors='replace')}\n")
 								print("Forward response to client or Drop? [F/D]")
 								response_input = input("Enter your choice: ").strip().upper()
@@ -118,4 +119,5 @@ def main():
 		sys.exit(0)
 
 if __name__ == "__main__":
+	clear_screen()
 	main()
