@@ -14,12 +14,33 @@ Well, it's not optimal for complex works but it's extremely useful for quick mod
 
 Well, i had times when i needed to do a quick debugging on packets but due to lack of this tool, i had to wait minutes for Burp to load and also deal with its interface. So i decided to write this tool that only needs a single command to run and do the main things that Burp is created for. Also i'm addicted to coding... so yeah.
 
+# Installation
+
+You don't need any complex installation process. Just clone the repository and run the script
+
+`git clone https://github.com/ch1y0w0/CLIntercept.git`
+
+# Usage
+
+I tried to make it as simple as possible. For help, use `-h` flag.
+
+```
+usage: proxy.py [-h] [-target TARGET] [-ip IP] [-port PORT]
+
+Packet interceptor and controller.
+
+options:
+  -h, --help      show this help message and exit
+  -target TARGET  Specify the target IP to filter packets.
+  -ip IP          Specify the listening IP address.
+  -port PORT      Specify the listening port.
+```
 
 # Disclaimer
 
 This tool is still in development phase and lacks many useful features. I'm actively developing it for my personal use so make sure to watch for changes. Any contribution is appreciated. And you can always reach to me at my [X](https://x.com/Ch1y0w0)
 
-**Note: (HTTPS support is in progress)**
+*Note: (HTTPS support is in progress)*
 
 # ToDo List
 	[X] ~~Fix Forwarding Back to Browser~~
