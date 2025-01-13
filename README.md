@@ -1,6 +1,6 @@
 # CLIntercept
 
-A simple lightweight tool to intercept incoming and outgoing HTTP packets using HTTP proxy to view, modify and edit them. It's extremely useful for quick tests and modifications on HTTP packets without needing to load heavy tools like Burp or ZAP. If you want to read more about forward proxies, checkout my [blog post](https://ch1y0w0.github.io/2024/12/16/How-Forward-Proxies-Work.html)
+A simple lightweight tool to intercept incoming and outgoing HTTP packets using HTTP proxy to view, modify and edit them. It's extremely useful for quick tests and modifications on HTTP packets without needing to load heavy tools like Burp or ZAP. If you want to read more about forward proxies, check out my [blog post](https://ch1y0w0.github.io/2024/12/16/How-Forward-Proxies-Work.html)
 
 # Why?
 

@@ -69,11 +69,12 @@ def main():
 						if not data:
 							break
 
-						clear_screen()
 						if target_ip and client_address[0] != target_ip:
+							# Forward packet directly without user input
 							client_socket.sendall(data)
 							continue
 
+						# Process the packet
 						dest_ip, dest_port = extract_destination(data)
 						if not dest_ip or not dest_port:
 							print("Failed to extract destination. Dropping packet.")
@@ -82,12 +83,12 @@ def main():
 						packet_details = f"Packet from {client_address}:{data.decode(errors='replace')}"
 						print(packet_details)
 						print(f"\nForward to {dest_ip}:{dest_port} or Drop? [F/D]")
+
 						user_input = input("Enter your choice: ").strip().upper()
 
 						if user_input == "F":
 							response = forward_packet(dest_ip, dest_port, data)
 							if response:
-								clear_screen()
 								print(f"Response from server:\n{response.decode(errors='replace')}\n")
 								print("Forward response to client or Drop? [F/D]")
 								response_input = input("Enter your choice: ").strip().upper()
@@ -102,8 +103,6 @@ def main():
 						else:
 							print("Invalid option. Dropping packet by default.")
 
-						clear_screen()
-
 				except Exception as e:
 					print(f"Error handling connection: {e}")
 				finally:
@@ -117,6 +116,7 @@ def main():
 	finally:
 		server_socket.close()
 		sys.exit(0)
+
 
 if __name__ == "__main__":
 	clear_screen()
