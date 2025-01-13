@@ -1,6 +1,6 @@
 # CLIntercept
 
-A simple lightweight tool to intercept incoming and outgoing HTTP packets using HTTP proxy to view, modify and edit them. It's extremely useful for quick tests and modifications on HTTP packets without needing to load heavy tools like Burp or ZAP. 
+A simple lightweight tool to intercept incoming and outgoing HTTP packets using HTTP proxy to view, modify and edit them. It's extremely useful for quick tests and modifications on HTTP packets without needing to load heavy tools like Burp or ZAP. If you want to read more about forward proxies, checkout my [blog post](https://ch1y0w0.github.io/2024/12/16/How-Forward-Proxies-Work.html)
 
 # Why?
 
@@ -10,7 +10,7 @@ Well, it's not optimal for complex works but it's extremely useful for quick mod
 3. Lightweight
 4. Written in raw Python with as less as dependencies possible
 
-# No I mean Seriously, WHY?
+# No I Mean Seriously, WHY?
 
 Well, i had times when i needed to do a quick debugging on packets but due to lack of this tool, i had to wait minutes for Burp to load and also deal with its interface. So i decided to write this tool that only needs a single command to run and do the main things that Burp is created for. Also i'm addicted to coding... so yeah.
 
