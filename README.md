@@ -36,6 +36,12 @@ options:
   -port PORT      Specify the listening port.
 ```
 
+To run the proxy server:
+```
+python proxy.py
+```
+You can now set `127.0.0.1:8080` as your proxy server.
+
 # Disclaimer
 
 This tool is still in development phase and lacks many useful features. I'm actively developing it for my personal use so make sure to watch for changes. Any contribution is appreciated. And you can always reach to me at my [X](https://x.com/Ch1y0w0)
