@@ -54,7 +54,7 @@ def main():
 		server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		server_socket.bind((listen_ip, listen_port))
 		server_socket.listen(5)
-		print("Server started. Waiting for connections...")
+		print(f"Server started on target {target_ip}. Waiting for connections...")
 
 		while True:
 			readable, _, _ = select.select([server_socket], [], [], 1)
