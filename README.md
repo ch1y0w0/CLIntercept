@@ -60,3 +60,4 @@ This tool is still in development phase and lacks many useful features. I'm acti
 	[ ] Modify Packets
 	[ ] HTTPS (Certificate generation)
 	[X] ~~Full Rework~~
+	[ ] Improve Target Filtering (Regex)
