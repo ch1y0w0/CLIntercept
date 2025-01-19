@@ -40,6 +40,12 @@ To run the proxy server:
 ```
 python proxy.py
 ```
+
+Setting a target will only print the packets belong to the target and will automatically forward any other packet:
+```
+python proxy.py -target google
+```
+
 You can now set `127.0.0.1:8080` as your proxy server.
 
 # Disclaimer
