@@ -103,6 +103,7 @@ def main():
 									print("Invalid option. Dropping response by default.")
 						elif user_input == "D":
 							print("Packet dropped.")
+							break
 						else:
 							print("Invalid option. Dropping packet by default.")
 
